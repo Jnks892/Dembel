@@ -22,7 +22,7 @@ const wishesList = [
 ];
 
 // ФИКСИРОВАННАЯ ДАТА СТАРТА — 12 МАЯ 2026 ГОДА
-const START_DATE = new Date(2026, 4, 12); // месяц 4 = май
+const START_DATE = new Date(2026, 4, 12);
 START_DATE.setHours(0, 0, 0, 0);
 
 function getCurrentCigaretteIndex() {
@@ -38,8 +38,9 @@ function getCurrentCigaretteIndex() {
     const diffTime = today - START_DATE;
     const daysPassed = Math.floor(diffTime / (1000 * 60 * 60 * 24));
     
-    // Обратный порядок: сигарета 20 в первый день (daysPassed = 0)
-    let cigaretteIndex = (wishesList.length - 1) - daysPassed;
+    // Прямой порядок: сигарета 20 в первый день (индекс 0)
+    // Теперь первый день (daysPassed = 0) открывает индекс 0 (пожелание №1)
+    let cigaretteIndex = daysPassed;
     
     // Не уходим за пределы
     if (cigaretteIndex < 0) cigaretteIndex = 0;
@@ -48,13 +49,13 @@ function getCurrentCigaretteIndex() {
     return cigaretteIndex;
 }
 
-// Какие сигареты открыты? (все от текущей до конца)
 function getUnlockedIndices() {
     const currentIdx = getCurrentCigaretteIndex();
     if (currentIdx === -1) return [];
     
+    // Открываем все индексы от 0 до currentIdx (прямой порядок)
     const unlocked = [];
-    for (let i = currentIdx; i < wishesList.length; i++) {
+    for (let i = 0; i <= currentIdx; i++) {
         unlocked.push(i);
     }
     return unlocked;
@@ -67,11 +68,11 @@ function renderWishes() {
     const currentCigIdx = getCurrentCigaretteIndex();
     const unlocked = getUnlockedIndices();
     
-    // Вычисляем оставшиеся сигареты
     let remainingCigarettes = 20;
     if (currentCigIdx !== -1) {
-        const todayCigaretteNumber = currentCigIdx + 1;
-        remainingCigarettes = todayCigaretteNumber - 1;
+        // Сегодняшняя сигарета = currentCigIdx + 1
+        // Осталось = 20 - (currentCigIdx + 1)
+        remainingCigarettes = 20 - (currentCigIdx + 1);
         if (remainingCigarettes < 0) remainingCigarettes = 0;
     }
     
@@ -82,15 +83,20 @@ function renderWishes() {
     
     const today = new Date();
     today.setHours(0, 0, 0, 0);
+    const isStarted = (today >= START_DATE);
     
     wishesList.forEach((wish, idx) => {
-        const cigaretteNumber = wishesList.length - idx;
+        const cigaretteNumber = idx + 1; // теперь сигарета 1 = индекс 0, сигарета 20 = индекс 19
         const isUnlocked = unlocked.includes(idx);
         
         const card = document.createElement("div");
         
-        // Если дата ещё не наступила — все карточки locked
-        const isActuallyLocked = (today < START_DATE) ? true : !isUnlocked;
+        let isActuallyLocked = false;
+        if (!isStarted) {
+            isActuallyLocked = true;
+        } else {
+            isActuallyLocked = !isUnlocked;
+        }
         
         card.className = `wish-card ${!isActuallyLocked ? "unlocked" : "locked"}`;
         
@@ -114,9 +120,8 @@ function renderWishes() {
             if (!isActuallyLocked) {
                 alert(`📣 Боевое пожелание (Сигарета ${cigaretteNumber}):\n\n${wish}`);
             } else {
-                if (today < START_DATE) {
-                    const startDateStr = "12 мая 2026 года";
-                    alert(`🔒 Отсчёт начнётся ${startDateStr}.\nДо этого момента все сигареты засекречены.`);
+                if (!isStarted) {
+                    alert(`🔒 Отсчёт начнётся 12 мая 2026 года.\nДо этого момента все сигареты засекречены.`);
                 } else {
                     const remaining = cigaretteNumber - (currentCigIdx + 1);
                     alert(`🔒 Сигарета ${cigaretteNumber} ещё не выкурена.\nОсталось выкурить ${remaining} сигарет до неё.`);
